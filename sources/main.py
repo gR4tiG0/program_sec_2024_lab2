@@ -6,6 +6,7 @@ import tkinter
 from tkinter import filedialog
 import subprocess
 import shutil
+import winreg
 
 SOURCE_DIR = "./lab1_sources"
 
@@ -27,18 +28,29 @@ def get_system_info_hash() -> str:
     info_str = f"{username}{compname}{windows_folder}{system32_folder}{mouse_buttons}{screen_height}{disk_info}"
 
 
+
+    print(info_str)
+
     info_hash = hashlib.sha256(info_str.encode()).hexdigest()
 
     return info_hash
 
 def install_lab(dest:str) -> None:
     sysinf_hash = get_system_info_hash()
+    key = winreg.CreateKey(winreg.HKEY_CURRENT_USER, r"Software\Prikhodko")
+    winreg.SetValueEx(key, 'signature', 0, winreg.REG_SZ, sysinf_hash)
+    winreg.CloseKey(key)
     subprocess.check_call(['pyinstaller','--onefile', f"{SOURCE_DIR}/main.py"])
     shutil.rmtree('build')
     os.remove('main.spec')
-    shutil.move('dist/main.exe', os.path.join(dest, 'lab1.exe'))
-    os.mkdir(os.path.join(dest, 'json'))
-    shutil.rmtree('dest')
+    try:
+        shutil.move('dist/main.exe', os.path.join(dest, 'lab1.exe'))
+        os.mkdir(os.path.join(dest, 'json'))
+    except:
+        pass
+    shutil.rmtree('dist')
+
+
 
 def main() -> None:
 
